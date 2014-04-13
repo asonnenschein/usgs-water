@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 var async = require('async'),
-  _ = require('underscore');
+  _ = require('underscore'),
+  lib = require('../lib');
 
 // Command line parameters
 var argv = require('yargs')
@@ -23,8 +24,8 @@ var argv = require('yargs')
 
 // Set parameter codes based on booleans from cli
 var queries = [];
-if (argv.gageheight) queries.push('0065');
-if (argv.streamflow) queries.push('0060');
+if (argv.gageheight) queries.push('00065');
+if (argv.streamflow) queries.push('00060');
 
 // Join parameters into one comma-delimited string
 var query = _.map(queries, function(parameter) {
@@ -50,5 +51,5 @@ function returnUrl() {
             config['format'] + 
             config['state'] + 
             config['parameters'];
-  console.log(url);
+  lib.usgsReq(url);
 }
