@@ -2,6 +2,7 @@
 var async = require('async'),
   _ = require('underscore');
 
+// Command line parameters
 var argv = require('yargs')
   .usage('Command line tool for interfacing with USGS water service data')
   .alias('f', 'format')
@@ -20,14 +21,17 @@ var argv = require('yargs')
   .boolean(['g', 't'])
   .argv;
 
+// Set parameter codes based on booleans from cli
 var queries = [];
 if (argv.gageheight) queries.push('0065');
 if (argv.streamflow) queries.push('0060');
 
+// Join parameters into one comma-delimited string
 var query = _.map(queries, function(parameter) {
   return parameter;
 }).join(',');
 
+// Config object for constructing URL
 var config = {
   baseUrl: 'http://waterservices.usgs.gov/nwis/iv/?',
   format: 'format=' + argv.format,
@@ -35,10 +39,12 @@ var config = {
   parameters: '&parameterCd=' + query
 };
 
-var toDo = [];
-if (argv.state) toDo.push(returnUrl);
-async.series(toDo);
+// Make and execute a queue of tasks based on cli
+var queue = [];
+if (argv.state) queue.push(returnUrl);
+async.series(queue);
 
+// Return a URL for the USGS water services REST API
 function returnUrl() {
   var url = config['baseUrl'] + 
             config['format'] + 
