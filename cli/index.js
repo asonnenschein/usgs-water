@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 var async = require('async'),
-  _ = require('underscore'),
-  lib = require('../lib');
+    _ = require('underscore'),
+    lib = require('../lib');
 
 // Command line parameters
 var argv = require('yargs')
@@ -51,5 +51,8 @@ function returnUrl() {
             config['format'] + 
             config['state'] + 
             config['parameters'];
-  lib.usgsRequest(url);
+  lib.usgsRequest(url, function (data) {
+  	var geo = lib.toGeoJSON(data);
+  	console.log(geo);
+  });
 }
