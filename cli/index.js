@@ -51,5 +51,5 @@ function returnUrl() {
             config['format'] + 
             config['state'] + 
             config['parameters'];
-  lib.usgsReq(url);
+  lib.usgsRequest(url);
 }
