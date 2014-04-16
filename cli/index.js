@@ -46,6 +46,7 @@ if (argv.state) queue.push(returnUrl);
 async.series(queue);
 
 // Return a URL for the USGS water services REST API
+/*
 function returnUrl() {
   var url = config['baseUrl'] + 
             config['format'] + 
@@ -55,4 +56,12 @@ function returnUrl() {
   	var geo = lib.toGeoJSON(data);
   	console.log(geo);
   });
-}
+}*/
+
+function returnUrl() {
+  var url = config['baseUrl'] + 
+            config['format'] + 
+            config['state'] + 
+            config['parameters'];
+  lib.pipeUsgsRequest(url);
+  };
