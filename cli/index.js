@@ -35,9 +35,9 @@ var query = _.map(queries, function(parameter) {
 }).join(',');
 
 // Return a URL for the USGS water services REST API
-var returnUrl = function (state, format, query) {
+var returnUrl = function (state, query) {
   var baseUrl = 'http://waterservices.usgs.gov/nwis/iv/?',
-      format = 'format=' + format,
+      format = 'format=json',
       state = '&stateCd=' + state,
       parameters = '&parameterCd=' + query;
   return baseUrl + format + state + parameters;
@@ -49,31 +49,21 @@ if (argv.state) queue.push(returnState);
 if (argv.allStates) queue.push(returnAllStates);
 async.series(queue);
 
-/*
-function returnUrl() {
-  var url = config['baseUrl'] + 
-            config['format'] + 
-            config['state'] + 
-            config['parameters'];
-  lib.usgsRequest(url, function (data) {
-  	var geo = lib.toGeoJSON(data);
-  	console.log(geo);
-  });
-}*/
-
+// Return an individual state
 function returnState() {
-  var url = returnUrl(argv.state, argv.format, query);
+  var url = returnUrl(argv.state, query);
   lib.pipeUsgsRequest(url);
-  };
+};
 
+// Return every state
 function returnAllStates() {
-  var states = ['az', 'ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', 
-                'hi', 'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', 
-                'ma', 'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj', 
-                'nm', 'ny', 'nc', 'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', 
-                'sd', 'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv', 'wi', 'wy'];
+  var states = ['ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', 'hi', 
+                'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', 'ma', 
+                'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj', 'nm', 
+                'ny', 'nc', 'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', 'sd', 
+                'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv', 'wi', 'wy'];
   _.each(states, function (state) {
-    var url = returnUrl(state, argv.format, query)
+    var url = returnUrl(state, query)
     lib.pipeUsgsRequest(url);  
   })
 }
