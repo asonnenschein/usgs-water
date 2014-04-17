@@ -9,17 +9,19 @@ var argv = require('yargs')
   .alias('f', 'format')
   .describe('f', 'Data service format')
 
-  .demand('s')
   .alias('s', 'state')
   .describe('s', 'U.S. two letter state abbreviation')
+
+  .alias('a', 'allStates')
+  .describe('a', 'Return data for all states in the U.S.')
 
   .alias('g', 'gageheight')
   .describe('g', 'Return gage height data attribute')
 
   .alias('t', 'streamflow')
   .describe('t', 'Return streamflow data attribute')
-  .default({f: 'json', g: true, t: true})
-  .boolean(['g', 't'])
+  .default({f: 'json', g: true, t: true, a: false})
+  .boolean(['g', 't', 'a'])
   .argv;
 
 // Set parameter codes based on booleans from cli
@@ -32,20 +34,21 @@ var query = _.map(queries, function(parameter) {
   return parameter;
 }).join(',');
 
-// Config object for constructing URL
-var config = {
-  baseUrl: 'http://waterservices.usgs.gov/nwis/iv/?',
-  format: 'format=' + argv.format,
-  state: '&stateCd=' + argv.state,
-  parameters: '&parameterCd=' + query
-};
+// Return a URL for the USGS water services REST API
+var returnUrl = function (state, format, query) {
+  var baseUrl = 'http://waterservices.usgs.gov/nwis/iv/?',
+      format = 'format=' + format,
+      state = '&stateCd=' + state,
+      parameters = '&parameterCd=' + query;
+  return baseUrl + format + state + parameters;
+}
 
 // Make and execute a queue of tasks based on cli
 var queue = [];
-if (argv.state) queue.push(returnUrl);
+if (argv.state) queue.push(returnState);
+if (argv.allStates) queue.push(returnAllStates);
 async.series(queue);
 
-// Return a URL for the USGS water services REST API
 /*
 function returnUrl() {
   var url = config['baseUrl'] + 
@@ -58,10 +61,19 @@ function returnUrl() {
   });
 }*/
 
-function returnUrl() {
-  var url = config['baseUrl'] + 
-            config['format'] + 
-            config['state'] + 
-            config['parameters'];
+function returnState() {
+  var url = returnUrl(argv.state, argv.format, query);
   lib.pipeUsgsRequest(url);
   };
+
+function returnAllStates() {
+  var states = ['az', 'ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', 
+                'hi', 'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', 
+                'ma', 'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj', 
+                'nm', 'ny', 'nc', 'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', 
+                'sd', 'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv', 'wi', 'wy'];
+  _.each(states, function (state) {
+    var url = returnUrl(state, argv.format, query)
+    lib.pipeUsgsRequest(url);  
+  })
+}
