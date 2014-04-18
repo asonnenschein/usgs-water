@@ -64,6 +64,8 @@ function returnAllStates() {
                 'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv', 'wi', 'wy'];
   _.each(states, function (state) {
     var url = returnUrl(state, query)
-    lib.pipeUsgsRequest(url);  
+    lib.pipeUsgsRequest(url, function (data) {
+      console.log(data);
+    });  
   })
 }
