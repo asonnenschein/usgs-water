@@ -52,7 +52,9 @@ async.series(queue);
 // Return an individual state
 function returnState() {
   var url = returnUrl(argv.state, query);
-  lib.pipeUsgsRequest(url);
+  lib.pipeUsgsRequest(url, function (data) {
+    console.log(data);
+  });
 };
 
 // Return every state
@@ -66,6 +68,6 @@ function returnAllStates() {
     var url = returnUrl(state, query)
     lib.pipeUsgsRequest(url, function (data) {
       console.log(data);
-    });  
+    })
   })
 }
