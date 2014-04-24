@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 var async = require('async'),
     _ = require('underscore'),
     lib = require('../lib');
@@ -20,6 +21,10 @@ var argv = require('yargs')
 
   .alias('t', 'streamflow')
   .describe('t', 'Return streamflow data attribute')
+
+  .alias('d', 'database')
+  .describe('d', 'Connect to database')
+
   .default({f: 'json', g: true, t: true, a: false})
   .boolean(['g', 't', 'a'])
   .argv;
@@ -47,10 +52,11 @@ var returnUrl = function (state, query) {
 var queue = [];
 if (argv.state) queue.push(returnState);
 if (argv.allStates) queue.push(returnAllStates);
+if (argv.database) queue.push(connectDatabase);
 async.series(queue);
 
 // Return an individual state
-function returnState() {
+function returnState () {
   var url = returnUrl(argv.state, query);
   lib.pipeUsgsRequest(url, function (data) {
     console.log(data);
@@ -58,7 +64,7 @@ function returnState() {
 };
 
 // Return every state
-function returnAllStates() {
+function returnAllStates () {
   var states = ['ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', 'hi', 
                 'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', 'ma', 
                 'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj', 'nm', 
@@ -70,4 +76,9 @@ function returnAllStates() {
       console.log(data);
     })
   })
+}
+
+// Connect to CouchDB
+function connectDatabase () {
+  lib.connectCouchDB();
 }
