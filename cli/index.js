@@ -2,7 +2,9 @@
 
 var async = require('async'),
     _ = require('underscore'),
-    lib = require('../lib');
+    lib = require('../lib'),
+    fs = require('fs'),
+    config = __dirname + '/../config.json';
 
 // Command line parameters
 var argv = require('yargs')
@@ -80,5 +82,9 @@ function returnAllStates () {
 
 // Connect to CouchDB
 function connectDatabase () {
-  lib.connectCouchDB();
+  fs.readFile(config, 'utf8', function (err, data) {
+    if (err) return console.log('Error: ' + err);
+    configData = JSON.parse(data);
+    lib.connectCouchDB(configData);
+  })
 }
