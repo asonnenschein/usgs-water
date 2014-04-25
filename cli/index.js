@@ -60,7 +60,7 @@ var returnUrl = function (state, query) {
 // Make and execute a queue of tasks based on cli
 var queue = [];
 if (argv.state) queue.push(returnState);
-if (argv.allStates) queue.push(returnAllStates);
+//if (argv.allStates) queue.push(returnAllStates);
 if (argv.database && argv.create_db) queue.push(createDatabase);
 if (argv.database && argv.remove_db) queue.push(removeDatabase);
 if (argv.database && argv.allStates) queue.push(insertAllRecords);
@@ -84,7 +84,7 @@ function returnAllStates () {
   _.each(states, function (state) {
     var url = returnUrl(state, query)
     lib.pipeUsgsRequest(url, function (data) {
-      console.log(data);
+      console.log(data)
     })
   })
 };
