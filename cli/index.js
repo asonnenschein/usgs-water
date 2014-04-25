@@ -27,8 +27,15 @@ var argv = require('yargs')
   .alias('d', 'database')
   .describe('d', 'Connect to database')
 
-  .default({f: 'json', g: true, t: true, a: false})
-  .boolean(['g', 't', 'a'])
+  .alias('c', 'create_db')
+  .describe('c', 'Create database')
+
+  .alias('r', 'remove_db')
+  .describe('r', 'Destroy database')
+
+  .default({f: 'json', g: true, t: true, a: false, d: false,
+            c: false, r: false})
+  .boolean(['g', 't', 'a', 'd', 'c', 'r'])
   .argv;
 
 // Set parameter codes based on booleans from cli
@@ -54,7 +61,9 @@ var returnUrl = function (state, query) {
 var queue = [];
 if (argv.state) queue.push(returnState);
 if (argv.allStates) queue.push(returnAllStates);
-if (argv.database) queue.push(connectDatabase);
+if (argv.database && argv.create_db) queue.push(createDatabase);
+if (argv.database && argv.remove_db) queue.push(removeDatabase);
+if (argv.database && argv.allStates) queue.push(insertAllRecords);
 async.series(queue);
 
 // Return an individual state
@@ -78,13 +87,37 @@ function returnAllStates () {
       console.log(data);
     })
   })
-}
+};
 
-// Connect to CouchDB
-function connectDatabase () {
+// Create a database in CouchDB
+function createDatabase () {
   fs.readFile(config, 'utf8', function (err, data) {
     if (err) return console.log('Error: ' + err);
     configData = JSON.parse(data);
-    lib.connectCouchDB(configData);
+    lib.createCouchDB(configData);
   })
-}
+};
+
+// Remove a database in CouchDB
+function removeDatabase () {
+  fs.readFile(config, 'utf8', function (err, data) {
+    if (err) return console.log('Error: ' + err);
+    configData = JSON.parse(data);
+    lib.killCouchDB(configData);
+  })
+};
+
+// Insert records into CouchDB database
+function insertAllRecords () {
+  var states = ['ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', 'hi', 
+                'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', 'ma', 
+                'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj', 'nm', 
+                'ny', 'nc', 'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', 'sd', 
+                'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv', 'wi', 'wy'];
+  _.each(states, function (state) {
+    var url = returnUrl(state, query)
+    lib.pipeUsgsRequest(url, function (data) {
+      lib.insertCouchDB(data);
+    })
+  })
+};
