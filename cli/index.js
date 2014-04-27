@@ -33,6 +33,9 @@ var argv = require('yargs')
   .alias('r', 'remove_db')
   .describe('r', 'Destroy database')
 
+  .alias('l', 'list_records')
+  .describe('l', 'List records in database')
+
   .default({f: 'json', g: true, t: true, a: false, d: false,
             c: false, r: false})
   .boolean(['g', 't', 'a', 'd', 'c', 'r'])
@@ -64,6 +67,7 @@ if (argv.state) queue.push(returnState);
 if (argv.database && argv.create_db) queue.push(createDatabase);
 if (argv.database && argv.remove_db) queue.push(removeDatabase);
 if (argv.database && argv.allStates) queue.push(insertAllRecords);
+if (argv.database && argv.list_records) queue.push(listAllRecords);
 async.series(queue);
 
 // Return an individual state
@@ -119,5 +123,13 @@ function insertAllRecords () {
     lib.pipeUsgsRequest(url, function (data) {
       lib.insertCouchDB(data);
     })
+  })
+};
+
+function listAllRecords () {
+  fs.readFile(config, 'utf8', function (err, data) {
+    if (err) return console.log('Error: ' + err);
+    configData = JSON.parse(data);
+    lib.listRecordsDB(configData);
   })
 };
