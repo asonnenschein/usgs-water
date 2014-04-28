@@ -33,8 +33,8 @@ var argv = require('yargs')
   .alias('r', 'remove_db')
   .describe('r', 'Destroy database')
 
-  .alias('l', 'list_records')
-  .describe('l', 'List records in database')
+  .alias('v', 'list_records')
+  .describe('v', 'List records in database')
 
   .default({f: 'json', g: true, t: true, a: false, d: false,
             c: false, r: false})
@@ -67,7 +67,7 @@ if (argv.state) queue.push(returnState);
 if (argv.database && argv.create_db) queue.push(createDatabase);
 if (argv.database && argv.remove_db) queue.push(removeDatabase);
 if (argv.database && argv.allStates) queue.push(insertAllRecords);
-if (argv.database && argv.list_records) queue.push(listAllRecords);
+if (argv.database && argv.list_records) queue.push(convertAllRecords);
 async.series(queue);
 
 // Return an individual state
@@ -126,13 +126,15 @@ function insertAllRecords () {
   })
 };
 
-function listAllRecords () {
+function convertAllRecords () {
   fs.readFile(config, 'utf8', function (err, data) {
     if (err) return console.log('Error: ' + err);
     configData = JSON.parse(data);
     lib.listRecordsDB(configData, function (duplicates) {
       lib.findDuplicatesDB(duplicates, function (array) {
-        lib.consolidateAttrsDB(configData, array);
+        lib.consolidateAttrsDB(configData, array, function (data) {
+          console.log(data);
+        });
       })
     })
   })
