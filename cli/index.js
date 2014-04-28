@@ -130,6 +130,10 @@ function listAllRecords () {
   fs.readFile(config, 'utf8', function (err, data) {
     if (err) return console.log('Error: ' + err);
     configData = JSON.parse(data);
-    lib.listRecordsDB(configData, lib.findDuplicatesDB);
+    lib.listRecordsDB(configData, function (duplicates) {
+      lib.findDuplicatesDB(duplicates, function (array) {
+        lib.consolidateAttrsDB(configData, array);
+      })
+    })
   })
 };
