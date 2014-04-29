@@ -9,8 +9,18 @@ var async = require('async'),
 // Command line parameters
 var argv = require('yargs')
   .usage('Command line tool for interfacing with USGS water service data')
-  .alias('f', 'format')
-  .describe('f', 'Data service format')
+  
+  .alias('u', 'url')
+  .describe('u', 'Database URL')
+
+  .alias('d', 'database')
+  .describe('d', 'Connect to database')
+
+  .alias('c', 'createDb')
+  .describe('c', 'Create database')
+
+  .alias('r', 'removeDb')
+  .describe('r', 'Destroy database')
 
   .alias('s', 'state')
   .describe('s', 'U.S. two letter state abbreviation')
@@ -18,23 +28,14 @@ var argv = require('yargs')
   .alias('a', 'allStates')
   .describe('a', 'Return data for all states in the U.S.')
 
+  .alias('l', 'listRecords')
+  .describe('l', 'List records in database')
+
   .alias('g', 'gageheight')
   .describe('g', 'Return gage height data attribute')
 
   .alias('t', 'streamflow')
   .describe('t', 'Return streamflow data attribute')
-
-  .alias('d', 'database')
-  .describe('d', 'Connect to database')
-
-  .alias('c', 'create_db')
-  .describe('c', 'Create database')
-
-  .alias('r', 'remove_db')
-  .describe('r', 'Destroy database')
-
-  .alias('v', 'list_records')
-  .describe('v', 'List records in database')
 
   .default({f: 'json', g: true, t: true, a: false, d: false,
             c: false, r: false})
@@ -51,6 +52,19 @@ var query = _.map(queries, function(parameter) {
   return parameter;
 }).join(',');
 
+// Make a config object out of DB parameters
+var configurate = function (url, db, callback) {
+  if (url && db) {
+    callback({'url': url, 'db': db});
+  } else {
+    fs.readFile(config, 'utf8', function (err, data) {
+      if (err) callback(err);
+      configData = JSON.parse(data);
+      callback(configData);  
+    })
+  }
+};
+
 // Return a URL for the USGS water services REST API
 var returnUrl = function (state, query) {
   var baseUrl = 'http://waterservices.usgs.gov/nwis/iv/?',
@@ -62,54 +76,41 @@ var returnUrl = function (state, query) {
 
 // Make and execute a queue of tasks based on cli
 var queue = [];
-if (argv.state) queue.push(returnState);
-//if (argv.allStates) queue.push(returnAllStates);
-if (argv.database && argv.create_db) queue.push(createDatabase);
-if (argv.database && argv.remove_db) queue.push(removeDatabase);
-if (argv.database && argv.allStates) queue.push(insertAllRecords);
-if (argv.database && argv.list_records) queue.push(convertAllRecords);
+if (argv.url && argv.database && argv.createDb || argv.createDb) 
+  queue.push(createDatabase);
+if (argv.url && argv.database && argv.removeDb || argv.removeDb)
+  queue.push(removeDatabase);
+if (argv.url && argv.database && argv.allStates || argv.allStates)
+  queue.push(insertAllRecords);
+if (argv.url && argv.database && argv.states || argv.states)
+  queue.push(insertStateRecords);
+if (argv.url && argv.database && argv.listRecords || argv.listRecords)
+  queue.push(convertAllRecords);
 async.series(queue);
-
-// Return an individual state
-function returnState () {
-  var url = returnUrl(argv.state, query);
-  lib.pipeUsgsRequest(url, function (data) {
-    console.log(data);
-  });
-};
-
-// Return every state
-function returnAllStates () {
-  var states = ['ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', 'hi', 
-                'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', 'ma', 
-                'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj', 'nm', 
-                'ny', 'nc', 'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', 'sd', 
-                'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv', 'wi', 'wy'];
-  _.each(states, function (state) {
-    var url = returnUrl(state, query)
-    lib.pipeUsgsRequest(url, function (data) {
-      console.log(data)
-    })
-  })
-};
 
 // Create a database in CouchDB
 function createDatabase () {
-  fs.readFile(config, 'utf8', function (err, data) {
-    if (err) return console.log('Error: ' + err);
-    configData = JSON.parse(data);
-    lib.createCouchDB(configData);
+  configurate(argv.url, argv.database, function (data) {
+    lib.createCouchDB(data);
   })
 };
 
 // Remove a database in CouchDB
 function removeDatabase () {
-  fs.readFile(config, 'utf8', function (err, data) {
-    if (err) return console.log('Error: ' + err);
-    configData = JSON.parse(data);
-    lib.killCouchDB(configData);
+  configurate(argv.url, argv.database, function (data) {
+    lib.killCouchDB(data);
   })
 };
+
+// Insert records for a single state into CouchDB
+function insertStateRecords () {
+  configurate(argv.url, argv.database, function (config) {
+    var url = returnUrl(argv.state, query);    
+    lib.pipeUsgsRequest(url, function (data) {
+      lib.insertCouchDB(config, data);
+    })
+  })
+}
 
 // Insert records into CouchDB database
 function insertAllRecords () {
