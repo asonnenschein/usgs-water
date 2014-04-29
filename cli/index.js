@@ -72,7 +72,7 @@ var returnUrl = function (state, query) {
       state = '&stateCd=' + state,
       parameters = '&parameterCd=' + query;
   return baseUrl + format + state + parameters;
-}
+};
 
 // Make and execute a queue of tasks based on cli
 var queue = [];
@@ -110,7 +110,7 @@ function insertStateRecords () {
       lib.insertCouchDB(config, data);
     })
   })
-}
+};
 
 // Insert records into CouchDB database
 function insertAllRecords () {
@@ -131,13 +131,11 @@ function insertAllRecords () {
 
 // Convert all records in DB to GeoJSON features
 function convertAllRecords () {
-  fs.readFile(config, 'utf8', function (err, data) {
-    if (err) return console.log('Error: ' + err);
-    configData = JSON.parse(data);
-    lib.listRecordsDB(configData, function (duplicates) {
+  configurate(argv.url, argv.database, function (config) {
+    lib.listRecordsDB(config, function (duplicates) {
       lib.findDuplicatesDB(duplicates, function (array) {
-        lib.consolidateAttrsDB(configData, array, function (data) {
-          console.log(data);
+        lib.consolidateAttrsDB(config, array, function (data) {
+          lib.insertCouchDB(config, data);
         });
       })
     })
