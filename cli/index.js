@@ -31,8 +31,11 @@ var argv = require('yargs')
   .alias('v', 'convertRecords')
   .describe('v', 'convert records in database to GeoJSON')
 
-  .alias('e', 'removeRecords')
-  .describe('e', 'Remove specific records')
+  .alias('m', 'removeRecords')
+  .describe('m', 'Remove specific records')
+
+  .alias('e', 'everything')
+  .describe('e', 'Do everything')
 
   .alias('g', 'gageheight')
   .describe('g', 'Return gage height data attribute')
@@ -91,6 +94,8 @@ if (argv.url && argv.database && argv.convertRecords || argv.convertRecords)
   queue.push(convertAllRecords);
 if (argv.url && argv.database && argv.removeRecords || argv.removeRecords)
   queue.push(removeTheseRecords);
+if (argv.url && argv.database && argv.everything || argv.everything)
+  queue.push(doEverything);
 async.series(queue);
 
 // Create a database in CouchDB
@@ -156,3 +161,11 @@ function removeTheseRecords () {
     })
   })
 };
+
+function doEverything () {
+  removeDatabase();
+  createDatabase();
+  insertAllRecords();
+  convertAllRecords();
+  removeTheseRecords();
+}
