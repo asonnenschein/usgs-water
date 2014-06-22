@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-var async = require('async'),
-    _ = require('underscore'),
-    lib = require('../lib'),
-    fs = require('fs'),
-    config = __dirname + '/../config.json';
+var async = require('async');
+var _ = require('underscore');
+var mDb = require('../lib/db');
+var fs = require('fs');
+var config = __dirname + '/../config.json';
 
 // Command line parameters
 var argv = require('yargs')
@@ -12,6 +12,12 @@ var argv = require('yargs')
   
   .alias('u', 'url')
   .describe('u', 'Database URL')
+
+  .alias('h', 'host')
+  .describe('h', 'Host address to connect to')
+
+  .alias('p', 'port')
+  .describe('p', 'Host port to connect to')
 
   .alias('d', 'database')
   .describe('d', 'Connect to database')
@@ -59,9 +65,9 @@ var query = _.map(queries, function(parameter) {
 }).join(',');
 
 // Make a config object out of DB parameters
-var configurate = function (url, db, callback) {
-  if (url && db) {
-    callback({'dbUrl': url, 'dbName': db});
+var configurate = function (host, port, db, callback) {
+  if (host && port && db) {
+    callback({'host': host, 'port': port, 'db': db});
   } else {
     fs.readFile(config, 'utf8', function (err, data) {
       if (err) callback(err);
@@ -82,11 +88,11 @@ var returnUrl = function (state, query) {
 
 // Make and execute a queue of tasks based on cli
 var queue = [];
-if (argv.url && argv.database && argv.createDb || argv.createDb) 
+if (argv.host && argv.port && argv.database && argv.createDb || argv.createDb)
   queue.push(createDatabase);
-if (argv.url && argv.database && argv.removeDb || argv.removeDb)
+if (argv.host && argv.port && argv.database && argv.removeDb || argv.removeDb)
   queue.push(removeDatabase);
-if (argv.url && argv.database && argv.allStates || argv.allStates)
+if (argv.host && argv.port && argv.database && argv.allStates || argv.allStates)
   queue.push(insertAllRecords);
 if (argv.url && argv.database && argv.state || argv.state)
   queue.push(insertStateRecords);
@@ -100,15 +106,15 @@ async.series(queue);
 
 // Create a database in CouchDB
 function createDatabase () {
-  configurate(argv.url, argv.database, function (data) {
-    lib.createCouchDB(data);
+  configurate(argv.host, argv.port, argv.database, function (d) {
+    mDb.createDb(d['host'], d['port'], d['db']);
   })
 };
 
 // Remove a database in CouchDB
 function removeDatabase () {
-  configurate(argv.url, argv.database, function (data) {
-    lib.killCouchDB(data);
+  configurate(argv.host, argv.port, argv.database, function (d) {
+    mDb.dropDb(d['host'], d['port'], d['db']);
   })
 };
 
@@ -124,7 +130,7 @@ function insertStateRecords () {
 
 // Insert records into CouchDB database
 function insertAllRecords () {
-  configurate(argv.url, argv.database, function (config) {
+  configurate(argv.host, argv.port, argv.database, function (d) {
     var states = ['ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', 'hi', 
                   'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', 'ma', 
                   'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj', 'nm', 
@@ -132,8 +138,8 @@ function insertAllRecords () {
                   'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv', 'wi', 'wy'];
     _.each(states, function (state) {
       var url = returnUrl(state, query)
-      lib.pipeUsgsRequest(url, function (data) {
-        lib.insertCouchDB(config, data);
+      mDb.insertStates(d['host'], d['port'], d['db'], function (res) {
+        console.log(res);
       })
     })
   })
