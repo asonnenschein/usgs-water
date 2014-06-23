@@ -3,6 +3,7 @@
 var async = require('async');
 var _ = require('underscore');
 var mDb = require('../lib/db');
+var proc = require('../lib');
 var fs = require('fs');
 var config = __dirname + '/../config.json';
 
@@ -28,8 +29,8 @@ var argv = require('yargs')
   .alias('r', 'removeDb')
   .describe('r', 'Destroy database')
 
-  .alias('s', 'state')
-  .describe('s', 'U.S. two letter state abbreviation')
+  .alias('f', 'find')
+  .describe('f', 'Find all documents in collection')
 
   .alias('a', 'allStates')
   .describe('a', 'Return data for all states in the U.S.')
@@ -65,16 +66,8 @@ var query = _.map(queries, function(parameter) {
 }).join(',');
 
 // Make a config object out of DB parameters
-var configurate = function (host, port, db, callback) {
-  if (host && port && db) {
-    callback({'host': host, 'port': port, 'db': db});
-  } else {
-    fs.readFile(config, 'utf8', function (err, data) {
-      if (err) callback(err);
-      configData = JSON.parse(data);
-      callback(configData);  
-    })
-  }
+var configure = function (host, port, db) {
+  if (host && port && db) return 'mongodb://' + host + ':' + port + '/' + db;
 };
 
 // Return a URL for the USGS water services REST API
@@ -88,14 +81,12 @@ var returnUrl = function (state, query) {
 
 // Make and execute a queue of tasks based on cli
 var queue = [];
-if (argv.host && argv.port && argv.database && argv.createDb || argv.createDb)
-  queue.push(createDatabase);
 if (argv.host && argv.port && argv.database && argv.removeDb || argv.removeDb)
   queue.push(removeDatabase);
 if (argv.host && argv.port && argv.database && argv.allStates || argv.allStates)
   queue.push(insertAllRecords);
-if (argv.url && argv.database && argv.state || argv.state)
-  queue.push(insertStateRecords);
+if (argv.host && argv.port && argv.database && argv.find)
+  queue.push(getAllDocuments);
 if (argv.url && argv.database && argv.convertRecords || argv.convertRecords)
   queue.push(convertAllRecords);
 if (argv.url && argv.database && argv.removeRecords || argv.removeRecords)
@@ -104,43 +95,38 @@ if (argv.url && argv.database && argv.everything || argv.everything)
   queue.push(doEverything);
 async.series(queue);
 
-// Create a database in CouchDB
-function createDatabase () {
-  configurate(argv.host, argv.port, argv.database, function (d) {
-    mDb.createDb(d['host'], d['port'], d['db']);
-  })
-};
-
 // Remove a database in CouchDB
 function removeDatabase () {
-  configurate(argv.host, argv.port, argv.database, function (d) {
-    mDb.dropDb(d['host'], d['port'], d['db']);
-  })
-};
-
-// Insert records for a single state into CouchDB
-function insertStateRecords () {
-  configurate(argv.url, argv.database, function (config) {
-    var url = returnUrl(argv.state, query); 
-    lib.pipeUsgsRequest(url, function (data) {
-      lib.insertCouchDB(config, data);
-    })
-  })
+  var mongoUrl = configure(argv.host, argv.port, argv.database);
+  mDb.dropDb(mongoUrl);
 };
 
 // Insert records into CouchDB database
 function insertAllRecords () {
-  configurate(argv.host, argv.port, argv.database, function (d) {
-    var states = ['ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', 'hi', 
-                  'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', 'ma', 
-                  'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj', 'nm', 
-                  'ny', 'nc', 'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', 'sd', 
-                  'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv', 'wi', 'wy'];
+  var mongoUrl = configure(argv.host, argv.port, argv.database);
+  var states = ['ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', 'hi',
+                'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', 'ma',
+                'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj', 'nm',
+                'ny', 'nc', 'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', 'sd',
+                'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv', 'wi', 'wy'];
+  mDb.connectDb(mongoUrl, function (db) {
     _.each(states, function (state) {
-      var url = returnUrl(state, query)
-      mDb.insertStates(d['host'], d['port'], d['db'], function (res) {
-        console.log(res);
+      var url = returnUrl(state, query);
+      proc.pipeUsgsRequest(url, function (data) {
+        mDb.insertData(db, 'allStates', data, function (res) {
+          console.log(res);
+        })
       })
+    })
+  })
+};
+
+function getAllDocuments () {
+  var mongoUrl = configure(argv.host, argv.port, argv.database);
+  mDb.connectDb(mongoUrl, function (db) {
+    mDb.findEverything(db, 'allStates', function (res) {
+      console.log(res);
+      db.close();
     })
   })
 };
