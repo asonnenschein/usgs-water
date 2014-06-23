@@ -125,8 +125,10 @@ function getAllDocuments () {
   var mongoUrl = configure(argv.host, argv.port, argv.database);
   mDb.connectDb(mongoUrl, function (db) {
     mDb.findEverything(db, 'allStates', function (res) {
-      console.log(res);
-      db.close();
+      proc.findDuplicatesDb(res, function (d) {
+        console.log(d);
+        db.close();
+      })
     })
   })
 };
