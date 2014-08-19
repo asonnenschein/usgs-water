@@ -12,6 +12,9 @@ var argv = require('yargs')
   .alias('h', 'harvest')
   .describe('h', 'Harvest water data from USGS')
 
+  .alias('r', 'reduce')
+  .describe('r', 'Reduce harvested records to GeoJSON')
+
   .argv;
 
 var query = ['00065', '00060'].join(',');
@@ -28,6 +31,7 @@ function returnUrl (state, query) {
 // Make and execute a queue of tasks based on cli
 var queue = [];
 if (argv.harvest) queue.push(harvestRecords);
+if (argv.reduce) queue.push(reduceRecords);
 async.series(queue);
 
 function harvestRecords () {
@@ -45,78 +49,13 @@ function harvestRecords () {
     process.harvest(url, function (err, res) {
       if (err) console.log(err);
       else console.log(res);
-    });
-  })
+    })
+  });
 }
 
-/*
-// Make and execute a queue of tasks based on cli
-var queue = [];
-if (argv.harvest) queue.push(harvestRecords);
-/*
-if (argv.host && argv.port && argv.database && argv.removeDb || argv.removeDb)
-  queue.push(removeDatabase);
-if (argv.host && argv.port && argv.database && argv.allStates || argv.allStates)
-  queue.push(insertAllRecords);
-if (argv.host && argv.port && argv.database && argv.find)
-  queue.push(getAllDocuments);
-if (argv.url && argv.database && argv.convertRecords || argv.convertRecords)
-  queue.push(convertAllRecords);
-if (argv.url && argv.database && argv.removeRecords || argv.removeRecords)
-  queue.push(removeTheseRecords);
-if (argv.url && argv.database && argv.everything || argv.everything)
-  queue.push(doEverything);
-
-async.series(queue);
-
-// Remove a database in CouchDB
-function removeDatabase () {
-  var mongoUrl = configure(argv.host, argv.port, argv.database);
-  mDb.dropDb(mongoUrl);
+function reduceRecords () {
+  process.reduce(function (err, res) {
+    if (err) console.log(err);
+    else console.log(res);
+  });
 }
-
-
-
-function getAllDocuments () {
-  var mongoUrl = configure(argv.host, argv.port, argv.database);
-  mDb.connectDb(mongoUrl, function (db) {
-    mDb.findEverything(db, 'allStates', function (res) {
-      proc.findDuplicatesDb(res, function (d) {
-        console.log(d);
-        db.close();
-      })
-    })
-  })
-};
-
-// Convert all records in DB to GeoJSON features
-function convertAllRecords () {
-  configurate(argv.url, argv.database, function (config) {
-    lib.makeNewIdsDB(config, function (duplicates) {
-      lib.findDuplicatesDB(duplicates, function (array) {
-        lib.consolidateAttrsDB(config, array, function (data) {
-          lib.insertCouchDB(config, data);
-        });
-      })
-    })
-  })
-};
-
-function removeTheseRecords () {
-  configurate(argv.url, argv.database, function (config) {
-    lib.removeByIdsDB(config, function (data) {
-      _.each(data, function (record) {
-        lib.removeRecordsCouchDB(config, record);
-      })
-    })
-  })
-};
-
-function doEverything () {
-  removeDatabase();
-  createDatabase();
-  insertAllRecords();
-  convertAllRecords();
-  removeTheseRecords();
-}
-*/
