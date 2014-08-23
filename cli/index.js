@@ -15,6 +15,9 @@ var argv = require('yargs')
   .alias('r', 'reduce')
   .describe('r', 'Reduce harvested records to GeoJSON')
 
+  .alias('m', 'merge')
+  .describe('m', 'Merge GeoJSON records')
+
   .argv;
 
 var query = ['00065', '00060'].join(',');
@@ -32,6 +35,7 @@ function returnUrl (state, query) {
 var queue = [];
 if (argv.harvest) queue.push(harvestRecords);
 if (argv.reduce) queue.push(reduceRecords);
+if (argv.merge) queue.push(mergeRecords);
 async.series(queue);
 
 function harvestRecords () {
@@ -54,8 +58,12 @@ function harvestRecords () {
 }
 
 function reduceRecords () {
-  process.reduce(function (err, res) {
+  process.reduceToGeoJSON(function (err, res) {
     if (err) console.log(err);
     else console.log(res);
   });
+}
+
+function mergeRecords () {
+  process.mergeGeoJSONRecords();
 }
