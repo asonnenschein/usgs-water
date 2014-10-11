@@ -1,0 +1,31 @@
+{
+  "name": "usgs-water",
+  "version": "0.0.0",
+  "description": "water-services ==============",
+  "main": "index.js",
+  "dependencies": {
+    "JSONStream": "0.7.2",
+    "async": "0.7.0",
+    "event-stream": "3.1.2",
+    "express": "4.9.7",
+    "express-params": "0.0.3",
+    "mongoose": "3.8.15",
+    "request": "2.34.0",
+    "underscore": "1.6.0",
+    "yargs": "1.2.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/asonnenschein/usgs-water.git"
+  },
+  "author": "Adrian Sonnenschein",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/asonnenschein/usgs-water/issues"
+  },
+  "homepage": "https://github.com/asonnenschein/usgs-water"
+}

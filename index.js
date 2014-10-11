@@ -59,7 +59,7 @@ function harvestRecords () {
 
 function reduceRecords () {
   process.reduceToGeoJSON(function (err, res) {
-    if (err) console.log(err);
+    if (err) throw err;
     else console.log(res);
   });
 }
