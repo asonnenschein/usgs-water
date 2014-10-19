@@ -11,3 +11,12 @@ app.views.TileLayerView = Backbone.View.extend({
     if (this.model.get('active')) return this.model;
   }
 });
+
+app.views.WaterView = Backbone.View.extend({
+  render: function () {
+    this.addToMap();
+  },
+  addToMap: function () {
+    this.model.get('layer').addTo(app.map);
+  }
+});

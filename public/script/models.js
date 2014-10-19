@@ -37,3 +37,17 @@ app.models.TileLayer = app.models.LayerModel.extend({
     }
   }
 });
+
+app.models.GeoJSONLayer = app.models.LayerModel.extend({
+  createLayer: function (options, callback) {
+    var data
+      , layerOptions
+      , layer
+      ;
+
+    data = this.get('data');
+    layerOptions = this.get('layerOptions');
+    layer = L.geoJson(data, layerOptions);
+    callback(layer);
+  }
+});

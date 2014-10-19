@@ -11,8 +11,8 @@ function map () {
 
   doc.geometry.type = 'Point';
   doc.geometry.coordinates = [
-    this.sourceInfo.geoLocation.geogLocation.latitude,
-    this.sourceInfo.geoLocation.geogLocation.longitude];
+    this.sourceInfo.geoLocation.geogLocation.longitude,
+    this.sourceInfo.geoLocation.geogLocation.latitude];
 
   doc.properties.record = 'usgs-water';
   doc.properties.id = this.name;

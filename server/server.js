@@ -2,6 +2,7 @@ var express = require('express')
   , params = require('express-params')
   , path = require('path')
   , fs = require('fs')
+  , cors = require('cors')
   , routes = require('./routes')
   ;
 
@@ -13,6 +14,8 @@ var style = path.join(__dirname, './../public/style')
   , assets = path.join(__dirname, './../public/assets')
   , views = path.join(__dirname, './../public/views')
   ;
+
+server.use(cors());
 
 server.use('/style', express.static(style));
 server.use('/script', express.static(script));

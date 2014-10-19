@@ -1,6 +1,8 @@
 var root = this;
 root.app == null ? app = root.app = {} : app = root.app;
 
+app.serviceUrl = 'http://127.0.0.1:3000/usgs-water/data.json';
+
 app.initialExtent = L.latLngBounds(
   [50.919376, -130.227639],
   [21.637598, -65.891701]
@@ -28,3 +30,22 @@ app.baseMap = new app.views.TileLayerView({
     }
   })
 }).render();
+
+d3.json(app.serviceUrl, function (err, res) {
+  if (err) console.log(err);
+  app.waterView = new app.views.WaterView({
+    model: new app.models.GeoJSONLayer({
+      data: res,
+      layerOptions: {
+        pointToLayer: function (f, ll) {
+          var markerOptions = {
+            radius: 8,
+            fillColor: 'red',
+            detectRetina: true
+          };
+          return L.circleMarker(ll, markerOptions);
+        }
+      }
+    })
+  }).render();
+});
