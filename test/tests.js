@@ -1,5 +1,5 @@
 var supertest = require('supertest')
-  , server = require('./../lib/server')
+  , server = require('./../server/server')
   ;
 
 describe('Tests', function () {
