@@ -2,7 +2,6 @@ var mongo = require('./mongo-config')
   , geoJsonMapReduce = require('./map-reduce/geojson')
   , mergeMapReduce = require('./map-reduce/merge')
   , domain = require('domain')
-  , _ = require('underscore')
   , async = require('async')
   ;
 
@@ -29,6 +28,8 @@ function reduceRecords (collection, callback) {
   var dbModel
     , o
     , docIds
+    , doc
+    , i
     , idQuery
     ;
 
@@ -37,9 +38,10 @@ function reduceRecords (collection, callback) {
   dbModel.find({}, function (err, res) {
     if (err) callback(err);
     docIds = [];
-    _.each(res, function (doc) {
+    for (i = 0; i < res.length; i++) {
+      doc = res[i];
       docIds.push(doc._id);
-    });
+    }
     idQuery = {_id: {$in: docIds}};
   });
 
@@ -59,6 +61,9 @@ function reduceMerge (collection, callback) {
     , stream
     , gage
     , idQuery
+    , docIds
+    , doc
+    , i
     ;
 
   dbModel = mongo.getCollection(collection);
@@ -66,9 +71,10 @@ function reduceMerge (collection, callback) {
   dbModel.find({}, function (err, res) {
     if (err) callback(err);
     docIds = [];
-    _.each(res, function (doc) {
+    for (i = 0; i < res.length; i++) {
+      doc = res[i];
       docIds.push(doc._id);
-    });
+    }
     idQuery = {_id: {$in: docIds}};
   });
 
@@ -138,12 +144,18 @@ function singleGeoJsonDoc (collection, callback) {
 }
 
 function getAllDocs (collection, callback) {
-  var dbModel;
-
-  dbModel = mongo.getCollection(collection);
+  var dbModel = mongo.getCollection(collection);
   dbModel.find().lean().exec(function (err, data) {
     if (err) callback(err);
     else callback(null, data[0].data);
+  })
+}
+
+function emptyCollection (collection, callback) {
+  var dbModel = mongo.getCollection(collection);
+  dbModel.remove({}, function (err) {
+    if (err) callback(err);
+    else callback(null)
   })
 }
 
@@ -153,3 +165,4 @@ exports.reduceRecords = reduceRecords;
 exports.reduceMerge = reduceMerge;
 exports.singleGeoJsonDoc = singleGeoJsonDoc;
 exports.getAllDocs = getAllDocs;
+exports.emptyCollection = emptyCollection;

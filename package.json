@@ -11,7 +11,9 @@
     "express-params": "0.0.3",
     "mongoose": "3.8.17",
     "request": "2.34.0",
-    "supertest": "0.14.0"
+    "supertest": "0.14.0",
+    "commander": "2.4.0",
+    "cors": "2.4.2"
   },
   "devDependencies": {},
   "scripts": {
@@ -25,6 +27,9 @@
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/asonnenschein/usgs-water/issues"
+  },
+  "bin": {
+    "usgs-water": "./server/cli.js"
   },
   "homepage": "https://github.com/asonnenschein/usgs-water"
 }

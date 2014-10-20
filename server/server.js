@@ -3,7 +3,9 @@ var express = require('express')
   , path = require('path')
   , fs = require('fs')
   , cors = require('cors')
+  , async = require('async')
   , routes = require('./routes')
+  , db = require('./db')
   ;
 
 var server = express();
@@ -22,13 +24,34 @@ server.use('/script', express.static(script));
 server.use('/assets', express.static(assets));
 server.use('/', express.static(views));
 
-server.post('/usgs-water/harvest', function (req, res, next) {
-  return next();
-}, routes.harvest);
+var cache_data;
 
-server.get('/usgs-water/data.json', function (req, res, next) {
-  return next();
-}, routes.getDocument);
+server.get('/usgs-water/data.json', function (req, res) {
+  res.send(cache_data);
+});
+
+(function () {
+  db.getAllDocs('record', function (err, res) {
+  var minutes
+    , interval
+    ;
+
+    if (err) console.log(err);
+
+    cache_data = res;
+    routes.subprocess();
+
+    minutes = 15;
+    interval = minutes * 60 * 1000;
+    setInterval(function () {
+      db.getAllDocs('record', function (err, res) {
+        if (err) console.log(err);
+        cache_data = res;
+        routes.subprocess();
+      })
+    }, interval)
+  })
+})();
 
 server.listen(3000);
 
