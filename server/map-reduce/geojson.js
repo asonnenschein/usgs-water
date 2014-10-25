@@ -22,7 +22,7 @@ function map () {
   if (this.values[0].value[0]) {
     attrs.variableCode = this.variable.variableCode[0].value || 'undefined';
     attrs.variableUnit = this.variable.unit.unitAbbreviation || 'undefined';
-    attrs.noDataValue = this.variable.noDataValue || 'undefined';
+    attrs.noDataValue = this.variable.noDataValue.toString() || 'undefined';
     attrs.value = this.values[0].value[0].value || 'undefined';
     attrs.timeStamp = this.values[0].value[0].dateTime || 'undefined';
   }

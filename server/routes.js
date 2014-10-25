@@ -123,5 +123,4 @@ function subprocess () {
 
 exports.harvest = harvest;
 exports.empty = empty;
-exports.getDocument = getDocument;
 exports.subprocess = subprocess;

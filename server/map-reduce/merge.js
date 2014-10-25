@@ -22,8 +22,7 @@ function reduce (key, values) {
   result.geometry.type = 'Point';
 
   values.forEach(function (value) {
-    var value
-      , stream
+    var stream
       , gage;
 
     value = value.value;
