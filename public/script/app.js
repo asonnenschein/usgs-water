@@ -45,8 +45,8 @@ d3.json(app.serviceUrl, function (err, res) {
     stream = parseFloat(res[i].properties.streamFlow.value);
     streamNoData = parseFloat(res[i].properties.streamFlow.noDataValue);
     if (gage !== gageNoData && stream !== streamNoData) {
-      var ratio = Math.round(Math.abs(stream / gage));
-      if (ratio !== Infinity) {
+      var ratio = Math.abs(stream / gage);
+      if (ratio && ratio !== Infinity) {
         res[i].properties.ratio = ratio;
         scaledData.push(ratio);
       }
@@ -54,7 +54,12 @@ d3.json(app.serviceUrl, function (err, res) {
     }
   }
 
-  var max = d3.max(scaledData);
+  var max = Math.max.apply(null, scaledData);
+  var min = Math.min.apply(null, scaledData);
+
+  var classes = 9;
+  var schemeId = 'Blues';
+  var scheme = colorbrewer[schemeId][classes];
 
   var bboxArray = [["-192.000", "-7.000"], ["-44.000", "79.000"]];
 
@@ -64,18 +69,30 @@ d3.json(app.serviceUrl, function (err, res) {
     .data(res)
     .enter().append('svg:circle')
     .attr('cx', function (d) {
-      if (d)
+      if (d && d.properties.ratio)
         return project([d.geometry.coordinates[0], d.geometry.coordinates[1]])[0]
     })
     .attr('cy', function (d) {
-      if (d)
+      if (d && d.properties.ratio)
         return project([d.geometry.coordinates[0], d.geometry.coordinates[1]])[1]
     })
-    .style('stroke', 'red')
-    .style('opacity', 0.5)
+    .style('stroke', scheme[classes - 1])
+    .style('fill', function (d) {
+      if (d && d.properties.ratio) {
+        var ratio = d.properties.ratio;
+        if (ratio > 50) return scheme[classes - 1];
+        if (ratio > 10 && ratio <= 50) return scheme[classes - 2];
+        if (ratio > 5 && ratio <= 10) return scheme[classes - 3];
+        if (ratio > 4 && ratio <= 5) return scheme[classes - 4];
+        if (ratio > 3 && ratio <= 4) return scheme[classes - 5];
+        if (ratio > 2 && ratio <= 3) return scheme[classes - 6];
+        if (ratio > 1 && ratio <= 2) return scheme[classes - 7];
+        if (ratio > 0 && ratio < 1) return scheme[classes - 8];
+      }
+    })
+    .style('opacity', 0.9)
     .attr('r', function (d) {
-      if (d)
-        return parseInt(d.properties.ratio) + 1
+      if (d) return 5
     })
   ;
 
@@ -99,26 +116,17 @@ d3.json(app.serviceUrl, function (err, res) {
 
     feature
       .attr('cx', function (d) {
-        if (d)
+        if (d && d.properties.ratio)
           return project([d.geometry.coordinates[0], d.geometry.coordinates[1]])[0]
       })
       .attr('cy', function (d) {
-        if (d)
+        if (d && d.properties.ratio)
           return project([d.geometry.coordinates[0], d.geometry.coordinates[1]])[1]
       })
       .attr('r', function (d) {
-        if (d)
-          var scale = (d.properties.ratio / max);
-          if (scale <= (max * 0.1)) return 1;
-          if (scale <= (max * 0.2)) return 2;
-          if (scale <= (max * 0.3)) return 3;
-          if (scale <= (max * 0.4)) return 4;
-          if (scale <= (max * 0.5)) return 5;
-          if (scale <= (max * 0.6)) return 6;
-          if (scale <= (max * 0.7)) return 7;
-          if (scale <= (max * 0.8)) return 8;
-          if (scale <= (max * 0.9)) return 9;
-          if (scale == max) return 10;
+        if (d && d.properties.ratio) {
+          return app.map.getZoom()
+        }
       })
     ;
 
