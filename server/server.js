@@ -14,7 +14,7 @@ params.extend(server);
 var style = path.join(__dirname, './../public/style')
   , script = path.join(__dirname, './../public/script')
   , assets = path.join(__dirname, './../public/assets')
-  , views = path.join(__dirname, './../public/views')
+  , home = path.join(__dirname, './../public/views', 'index.html')
   ;
 
 server.use(cors());
@@ -22,9 +22,14 @@ server.use(cors());
 server.use('/style', express.static(style));
 server.use('/script', express.static(script));
 server.use('/assets', express.static(assets));
-server.use('/', express.static(views));
 
 var cache_data;
+
+server.get('/', function (req, res) {
+  fs.readFile(home, 'utf8', function (err, text) {
+    res.send(text);
+  })
+});
 
 server.get('/usgs-water/data.json', function (req, res) {
   res.send(cache_data);
